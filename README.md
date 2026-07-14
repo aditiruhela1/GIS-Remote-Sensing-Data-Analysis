@@ -32,13 +32,12 @@ Study the Urban Heat Island (UHI) effect by analyzing Land Surface Temperature (
 
 ## 🛠️ Tools & Technologies
 
-- QGIS / ArcGIS
 - Remote Sensing
 - GIS
 - Satellite Imagery
 - Spatial Analysis
 - Landsat Data
-
+- Google Earth Engine
 ---
 
 ## 📂 Repository Structure
