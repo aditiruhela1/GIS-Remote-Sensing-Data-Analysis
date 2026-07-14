@@ -44,8 +44,8 @@ Study the Urban Heat Island (UHI) effect by analyzing Land Surface Temperature (
 
 ```
 ├── Reports/
-│   ├── Drought_Severity_Mapping.docx
-│   └── Urban_Heat_Island_Mapping.docx
+│   ├── Urban_Heat_Island_Mapping.pdf
+│   └── Vegetation_Control_Index.pdf
 │
 ├── Screenshots/
 │   ├── Drought_Map.png
