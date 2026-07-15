@@ -1,0 +1,153 @@
+// ==========================================
+// Project 2: Urban Heat Island Analysis
+// Study Area: Delhi NCR
+// Platform: Google Earth Engine
+// ==========================================
+
+// -------------------------
+// STEP 1: Define AOI
+// -------------------------
+
+var aoi = ee.FeatureCollection("FAO/GAUL/2015/level2")
+.filter(ee.Filter.eq('ADM2_NAME','New Delhi'));
+
+Map.centerObject(aoi,10);
+Map.addLayer(aoi,{color:'blue'},"AOI");
+
+// -------------------------
+// STEP 2: Landsat 8 Collection
+// -------------------------
+
+var image = ee.ImageCollection("LANDSAT/LC08/C02/T1_L2")
+.filterBounds(aoi)
+.filterDate('2025-01-01','2025-12-31')
+.filter(ee.Filter.lt('CLOUD_COVER',10))
+.median();
+
+// -------------------------
+// STEP 3: NDVI
+// -------------------------
+
+var ndvi = image
+.normalizedDifference(['SR_B5','SR_B4'])
+.rename('NDVI');
+
+Map.addLayer(ndvi,
+{
+min:-1,
+max:1,
+palette:['brown','yellow','green']
+},
+'NDVI');
+
+// -------------------------
+// STEP 4: Built-up Density (NDBI)
+// -------------------------
+
+var ndbi = image
+.normalizedDifference(['SR_B6','SR_B5'])
+.rename('NDBI');
+
+Map.addLayer(
+ndbi,
+{
+min:-1,
+max:1,
+palette:['green','yellow','red']
+},
+'NDBI'
+);
+
+// -------------------------
+// STEP 5: Land Surface Temperature
+// -------------------------
+
+var lst = image
+.select('ST_B10')
+.multiply(0.00341802)
+.add(149)
+.subtract(273.15)
+.rename('LST');
+
+Map.addLayer(
+lst,
+{
+min:20,
+max:45,
+palette:['blue','cyan','yellow','orange','red']
+},
+'LST'
+);
+
+// -------------------------
+// STEP 6: Urban Heat Island
+// -------------------------
+
+var uhi = lst.gt(35);
+
+Map.addLayer(
+uhi.updateMask(uhi),
+{
+palette:['red']
+},
+'UHI'
+);
+
+// -------------------------
+// STEP 7: Area Statistics
+// -------------------------
+
+var area = ee.Image.pixelArea()
+.divide(1e6)
+.updateMask(uhi)
+.reduceRegion({
+
+reducer:ee.Reducer.sum(),
+
+geometry:aoi,
+
+scale:30,
+
+maxPixels:1e13
+
+});
+
+print("UHI Area (sq km)",area);
+
+// -------------------------
+// STEP 8: Mean Temperature
+// -------------------------
+
+var meanTemp = lst.reduceRegion({
+
+reducer:ee.Reducer.mean(),
+
+geometry:aoi,
+
+scale:30,
+
+maxPixels:1e13
+
+});
+
+print("Average LST",meanTemp);
+
+// -------------------------
+// STEP 9: Export
+// -------------------------
+
+Export.image.toDrive({
+
+image:lst,
+
+description:'Delhi_UHI_2025',
+
+folder:'GEE_Projects',
+
+region:aoi,
+
+scale:30,
+
+maxPixels:1e13
+
+});
