@@ -1,0 +1,143 @@
+// ==========================================
+// Project 1: Drought Severity Mapping using VCI
+// Study Area: Bundelkhand
+// Platform: Google Earth Engine
+// ==========================================
+
+// -------------------------
+// STEP 1: Define Study Area
+// -------------------------
+
+var aoi = ee.FeatureCollection("FAO/GAUL/2015/level2")
+.filter(
+  ee.Filter.or(
+    ee.Filter.eq('ADM2_NAME','Jhansi'),
+    ee.Filter.eq('ADM2_NAME','Lalitpur'),
+    ee.Filter.eq('ADM2_NAME','Jalaun'),
+    ee.Filter.eq('ADM2_NAME','Mahoba'),
+    ee.Filter.eq('ADM2_NAME','Banda'),
+    ee.Filter.eq('ADM2_NAME','Hamirpur'),
+    ee.Filter.eq('ADM2_NAME','Chitrakoot')
+));
+
+Map.centerObject(aoi,8);
+Map.addLayer(aoi,{color:'blue'},"AOI");
+
+// -------------------------
+// STEP 2: Load MODIS NDVI
+// -------------------------
+
+var ndvi = ee.ImageCollection("MODIS/061/MOD13Q1")
+.filterBounds(aoi)
+.filterDate('2015-01-01','2025-12-31')
+.select('NDVI')
+.map(function(img){
+  return img.multiply(0.0001)
+            .copyProperties(img,['system:time_start']);
+});
+
+// -------------------------
+// STEP 3: Historical NDVI
+// -------------------------
+
+var ndviMin = ndvi.min();
+
+var ndviMax = ndvi.max();
+
+// -------------------------
+// STEP 4: Current NDVI
+// -------------------------
+
+var ndviCurrent = ndvi
+.filterDate('2025-01-01','2025-12-31')
+.mean();
+
+// -------------------------
+// STEP 5: Calculate VCI
+// -------------------------
+
+var vci = ndviCurrent.subtract(ndviMin)
+.divide(ndviMax.subtract(ndviMin))
+.rename('VCI');
+
+Map.addLayer(
+vci,
+{
+min:0,
+max:1,
+palette:['red','yellow','green']
+},
+'VCI'
+);
+
+// -------------------------
+// STEP 6: Drought Classes
+// -------------------------
+
+var drought = ee.Image(0)
+.where(vci.lt(0.2),1)
+.where(vci.gte(0.2).and(vci.lt(0.4)),2)
+.where(vci.gte(0.4).and(vci.lt(0.6)),3)
+.where(vci.gte(0.6),4);
+
+Map.addLayer(
+drought,
+{
+min:1,
+max:4,
+palette:[
+'#8B0000',
+'#FF8C00',
+'#FFFF00',
+'#008000'
+]
+},
+'Drought Classes'
+);
+
+// -------------------------
+// STEP 7: Area Statistics
+// -------------------------
+
+var areaImage = ee.Image.pixelArea()
+.divide(1e6)
+.addBands(drought);
+
+var stats = areaImage.reduceRegion({
+
+reducer:ee.Reducer.sum().group({
+
+groupField:1,
+groupName:'class'
+
+}),
+
+geometry:aoi,
+
+scale:250,
+
+maxPixels:1e13
+
+});
+
+print("Area Statistics (sq km)",stats);
+
+// -------------------------
+// STEP 8: Export
+// -------------------------
+
+Export.image.toDrive({
+
+image:vci,
+
+description:'VCI_Bundelkhand_2025',
+
+folder:'GEE_Projects',
+
+region:aoi,
+
+scale:250,
+
+maxPixels:1e13
+
+});
