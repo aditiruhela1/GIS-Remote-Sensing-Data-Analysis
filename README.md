@@ -43,6 +43,13 @@ Study the Urban Heat Island (UHI) effect by analyzing Land Surface Temperature (
 ## 📂 Repository Structure
 
 ```
+├── Code/
+│   ├── Drought Deverity Mapping using VCI
+│   └── Urban Heat Island Analysis
+|
+├── Concepts/
+│   └── GIS & Remote Sensing Concepts.pdf
+|
 ├── Reports/
 │   ├── Urban_Heat_Island_Mapping.pdf
 │   └── Vegetation_Control_Index.pdf
@@ -53,11 +60,6 @@ Study the Urban Heat Island (UHI) effect by analyzing Land Surface Temperature (
 │   ├── UHI_Map.png
 │   └── VCI_Map.png
 │
-├── Concepts/
-│   └── GIS & Remote Sensing Concepts.pdf
-├── Code/
-│   ├── Drought Deverity Mapping using VCI
-│   └── Urban Heat Island Analysis
 └── README.md
 ```
 
